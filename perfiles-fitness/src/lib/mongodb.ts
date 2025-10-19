@@ -1,25 +1,27 @@
-import { MongoClient, MongoClientOptions } from "mongodb";
+import { MongoClient } from "mongodb";
 
-const uri: string = process.env.MONGO_URI!;
-const options: MongoClientOptions = {};
+const uri = process.env.MONGO_URI!;
+if (!uri) throw new Error("❌ No se encontró la variable MONGO_URI en el archivo .env.local");
+
+const options = {};
 
 let client: MongoClient;
 let clientPromise: Promise<MongoClient>;
 
-if (!process.env.MONGO_URI) {
-  throw new Error("Debes definir MONGO_URI en tu .env");
-}
-
+// Usamos variable global para evitar reconexiones en desarrollo
 if (process.env.NODE_ENV === "development") {
-  // @ts-ignore
-  if (!(global as any)._mongoClientPromise) {
+  const globalWithMongo = global as typeof globalThis & {
+    _mongoClientPromise?: Promise<MongoClient>;
+  };
+
+  if (!globalWithMongo._mongoClientPromise) {
     client = new MongoClient(uri, options);
-    // @ts-ignore
-    (global as any)._mongoClientPromise = client.connect();
+    globalWithMongo._mongoClientPromise = client.connect();
   }
-  // @ts-ignore
-  clientPromise = (global as any)._mongoClientPromise;
+
+  clientPromise = globalWithMongo._mongoClientPromise!;
 } else {
+  // En producción (Vercel, etc.)
   client = new MongoClient(uri, options);
   clientPromise = client.connect();
 }

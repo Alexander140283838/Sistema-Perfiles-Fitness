@@ -1,33 +1,61 @@
-"use client"
+"use client";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-export default function Login() {
+
+export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(""); // ⚠️ Mensaje de error
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
+  // ✅ Si ya está logueado, lo redirigimos al inicio
   useEffect(() => {
-    if (localStorage.getItem("loggedIn") === "true") {
-      router.push("/");
+    const loggedIn = localStorage.getItem("loggedIn");
+    if (loggedIn === "true") {
+      router.push("/inicio");
     }
   }, [router]);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
+    setError("");
+    setLoading(true);
+
     if (!username || !password) {
-      setError("Por favor, completa todos los campos");
+      setError("Por favor completa todos los campos");
+      setLoading(false);
       return;
     }
 
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const user = users.find((u: any) => u.username === username && u.password === password);
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
 
-    if (user) {
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Usuario o contraseña incorrectos");
+        setLoading(false);
+        return;
+      }
+
+      // ✅ Guardamos sesión en localStorage
       localStorage.setItem("loggedIn", "true");
-      localStorage.setItem("username", username);
-      router.push("/");
-    } else {
-      setError("Usuario o contraseña incorrectos");
+      localStorage.setItem("username", data.user.username);
+
+      // ✅ También guardamos cookie para el middleware
+      document.cookie = "loggedIn=true; path=/; max-age=86400"; // dura 1 día
+
+      router.push("/inicio");
+    } catch (err) {
+      console.error(err);
+      setError("Error al conectar con el servidor");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -40,6 +68,7 @@ export default function Login() {
         <p className="text-center text-gray-300 mb-8">
           Inicia sesión para continuar
         </p>
+
         <input
           type="text"
           placeholder="Usuario"
@@ -57,19 +86,22 @@ export default function Login() {
           autoComplete="new-password"
         />
 
-        {/* ⚠️ Mensaje de error */}
         {error && (
-          <p className="text-red-500 text-sm mb-4 text-center">
-            {error}
-          </p>
+          <p className="text-red-500 text-sm mb-4 text-center">{error}</p>
         )}
 
         <button
           onClick={handleLogin}
-          className="w-full bg-green-400 text-black font-bold py-3 rounded-xl hover:bg-green-500 transition-colors"
+          disabled={loading}
+          className={`w-full font-bold py-3 rounded-xl transition-colors ${
+            loading
+              ? "bg-gray-500 cursor-not-allowed"
+              : "bg-green-400 text-black hover:bg-green-500"
+          }`}
         >
-          Iniciar sesión
+          {loading ? "Cargando..." : "Iniciar sesión"}
         </button>
+
         <p className="text-center text-gray-400 mt-6 text-sm">
           ¿No tienes cuenta?{" "}
           <span

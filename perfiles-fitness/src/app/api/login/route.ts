@@ -7,14 +7,18 @@ export async function POST(req: Request) {
     const { username, password } = await req.json();
 
     if (!username || !password) {
-      return NextResponse.json({ error: "Por favor completa todos los campos" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Por favor completa todos los campos" },
+        { status: 400 }
+      );
     }
 
     const client = await clientPromise;
-    const db = client.db("usuarios_Reales");
-    const users = db.collection("usuarios_Reales");
+    const db = client.db("perfiles_fitness"); // ✅ base unificada
+    const users = db.collection("usuarios");  // ✅ colección unificada
 
     const user = await users.findOne({ username: username.toLowerCase().trim() });
+
     if (!user) {
       return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
     }
@@ -29,7 +33,7 @@ export async function POST(req: Request) {
       user: { username: user.username },
     });
   } catch (error) {
-    console.error(error);
+    console.error("❌ Error en /api/login:", error);
     return NextResponse.json({ error: "Error en el servidor" }, { status: 500 });
   }
 }
