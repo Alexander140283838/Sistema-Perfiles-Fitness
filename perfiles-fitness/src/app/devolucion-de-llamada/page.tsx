@@ -10,7 +10,6 @@ export default function Devolucion() {
     const code = searchParams.get("code");
 
     if (code) {
-      // Aquí envías el código a tu API para intercambiarlo por access_token
       fetch("/api/spotifyToken", {
         method: "POST",
         body: JSON.stringify({ code }),

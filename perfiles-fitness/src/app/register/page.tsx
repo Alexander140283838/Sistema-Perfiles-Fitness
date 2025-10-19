@@ -8,26 +8,37 @@ export default function RegisterPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(""); // Mensaje de error
+  const [success, setSuccess] = useState(""); // Mensaje de éxito
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
+    setError("");
+    setSuccess("");
+
     if (!username || !password) {
       setError("Por favor completa todos los campos");
       return;
     }
 
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    if (users.find((u: any) => u.username === username)) {
-      setError("El usuario ya existe");
-      return;
+    try {
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Error al registrar el usuario");
+        return;
+      }
+
+      setSuccess("Cuenta creada correctamente ✅");
+      setTimeout(() => router.push("/login"), 1500); // Redirige al login
+    } catch (err) {
+      console.error(err);
+      setError("Error de conexión con el servidor");
     }
-
-    // Guardar nuevo usuario en localStorage
-    users.push({ username, password });
-    localStorage.setItem("users", JSON.stringify(users));
-
-    // NO iniciar sesión automáticamente
-    // Redirigir al login
-    router.push("/login");
   };
 
   return (
@@ -57,10 +68,12 @@ export default function RegisterPage() {
           autoComplete="new-password"
         />
 
+        {/* Mensajes de estado */}
         {error && (
-          <p className="text-red-500 text-sm mb-4 text-center">
-            {error}
-          </p>
+          <p className="text-red-500 text-sm mb-4 text-center">{error}</p>
+        )}
+        {success && (
+          <p className="text-green-400 text-sm mb-4 text-center">{success}</p>
         )}
 
         <button
