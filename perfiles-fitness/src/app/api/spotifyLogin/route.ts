@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID!;
-const REDIRECT_URI = process.env.NODE_ENV === "development"
-  ? process.env.REDIRECT_URI_LOCAL
-  : process.env.REDIRECT_URI;
+const REDIRECT_URI = process.env.REDIRECT_URI!; // más limpio y seguro
 
 const SCOPES = [
   "user-read-private",
@@ -18,7 +16,7 @@ export async function GET(req: NextRequest) {
   const params = new URLSearchParams({
     client_id: CLIENT_ID,
     response_type: "code",
-    redirect_uri: REDIRECT_URI!,
+    redirect_uri: REDIRECT_URI,
     scope: SCOPES,
   });
 
