@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 
-export default function Devolucion() {
+function DevolucionInner() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -16,10 +16,18 @@ export default function Devolucion() {
         headers: { "Content-Type": "application/json" },
       })
         .then(res => res.json())
-        .then(data => console.log("Token recibido:", data))
-        .catch(err => console.error(err));
+        .then(data => console.log("✅ Token recibido:", data))
+        .catch(err => console.error("❌ Error obteniendo token:", err));
     }
   }, [searchParams]);
 
   return <div>Redirigiendo...</div>;
+}
+
+export default function Devolucion() {
+  return (
+    <Suspense fallback={<div>Cargando devolución...</div>}>
+      <DevolucionInner />
+    </Suspense>
+  );
 }
