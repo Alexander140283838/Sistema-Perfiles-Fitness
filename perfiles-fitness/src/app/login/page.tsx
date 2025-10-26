@@ -10,11 +10,11 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ✅ Si ya está logueado, lo redirigimos al inicio
+  // 🧭 Si ya está logueado, redirigimos directamente al inicio principal
   useEffect(() => {
-    const loggedIn = localStorage.getItem("loggedIn");
-    if (loggedIn === "true") {
-      router.push("/inicio");
+    const loggedIn = document.cookie.includes("loggedIn=true");
+    if (loggedIn) {
+      router.replace("/"); // 👈 AHORA te lleva al home principal
     }
   }, [router]);
 
@@ -43,16 +43,17 @@ export default function LoginPage() {
         return;
       }
 
-      // ✅ Guardamos sesión en localStorage
+      // 🟢 Guardamos sesión local y cookie para el middleware
       localStorage.setItem("loggedIn", "true");
       localStorage.setItem("username", data.user.username);
 
-      // ✅ También guardamos cookie para el middleware
-      document.cookie = "loggedIn=true; path=/; max-age=86400"; // dura 1 día
+      // 🕓 Cookie válida por 1 día y accesible en todas las rutas
+      document.cookie = "loggedIn=true; path=/; max-age=86400; SameSite=Lax";
 
-      router.push("/inicio");
+      // ✅ Redirigir al home principal (ya no a /inicio)
+      router.replace("/");
     } catch (err) {
-      console.error(err);
+      console.error("Error al conectar con el servidor:", err);
       setError("Error al conectar con el servidor");
     } finally {
       setLoading(false);

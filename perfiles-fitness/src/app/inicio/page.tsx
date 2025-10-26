@@ -7,27 +7,47 @@ import Link from "next/link";
 export default function Inicio() {
   const router = useRouter();
   const [username, setUsername] = useState<string | null>(null);
+  const [isChecking, setIsChecking] = useState(true);
 
-  // ✅ Verificar si el usuario está logueado
+  // ✅ Verificar sesión
   useEffect(() => {
-    const loggedIn = localStorage.getItem("loggedIn");
-    const storedUser = localStorage.getItem("username");
+    const checkSession = () => {
+      const loggedInLocal = localStorage.getItem("loggedIn");
+      const loggedInCookie = document.cookie.includes("loggedIn=true");
+      const storedUser = localStorage.getItem("username");
 
-    if (loggedIn === "true" && storedUser) {
-      setUsername(storedUser);
-    } else {
-      router.push("/login");
-    }
+      if ((loggedInLocal === "true" || loggedInCookie) && storedUser) {
+        setUsername(storedUser);
+      } else {
+        // 🚫 No hay sesión → limpiar todo y redirigir
+        localStorage.removeItem("loggedIn");
+        localStorage.removeItem("username");
+        document.cookie =
+          "loggedIn=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
+        router.replace("/login");
+      }
+      setIsChecking(false);
+    };
+
+    checkSession();
   }, [router]);
 
-  // 🔓 Cerrar sesión
+  // 🔓 Cerrar sesión correctamente
   const handleLogout = () => {
+    // 🧹 Borrar localStorage
     localStorage.removeItem("loggedIn");
     localStorage.removeItem("username");
-    router.push("/login");
+
+    // 🗑️ Borrar cookie universalmente
+    document.cookie =
+      "loggedIn=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
+
+    // 🔁 Redirigir limpio al login
+    router.replace("/login");
   };
 
-  if (!username) {
+  // ⏳ Mientras verifica la sesión
+  if (isChecking) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
         Verificando sesión...
@@ -35,6 +55,16 @@ export default function Inicio() {
     );
   }
 
+  // ⚠️ Si no hay usuario (evita pantalla negra)
+  if (!username) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
+        Redirigiendo al inicio de sesión...
+      </div>
+    );
+  }
+
+  // ✅ Si hay sesión, mostrar la interfaz
   return (
     <div className="flex min-h-screen bg-gray-900 text-white">
       {/* Sidebar */}
@@ -61,6 +91,7 @@ export default function Inicio() {
           </Link>
         </nav>
 
+        {/* Botón de cierre de sesión */}
         <button
           onClick={handleLogout}
           className="mt-4 bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition"

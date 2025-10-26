@@ -6,15 +6,18 @@ export async function GET(req: Request) {
     const code = url.searchParams.get("code");
 
     if (!code) {
-      return NextResponse.json({ error: "Código de autorización no encontrado" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Código de autorización no encontrado" },
+        { status: 400 }
+      );
     }
 
     const body = new URLSearchParams({
       grant_type: "authorization_code",
       code,
-      redirect_uri: process.env.REDIRECT_URI!,
-      client_id: process.env.CLIENT_ID!,
-      client_secret: process.env.CLIENT_SECRET!,
+      redirect_uri: process.env.SPOTIFY_REDIRECT_URI!,
+      client_id: process.env.SPOTIFY_CLIENT_ID!,
+      client_secret: process.env.SPOTIFY_CLIENT_SECRET!,
     });
 
     const response = await fetch("https://accounts.spotify.com/api/token", {
@@ -30,12 +33,19 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: data.error_description }, { status: 400 });
     }
 
-    const redirectUrl = new URL(process.env.NEXT_PUBLIC_REDIRECT_SUCCESS_URL!);
+    // ✅ redirección segura hacia tu sitio en producción
+    const redirectUrl = new URL(
+      process.env.NEXT_PUBLIC_REDIRECT_SUCCESS_URL ||
+      "https://sistema-perfiles-fitness.vercel.app/inicio"
+    );
     redirectUrl.searchParams.set("access_token", data.access_token);
 
     return NextResponse.redirect(redirectUrl.toString());
   } catch (error) {
     console.error("Error general en Callback:", error);
-    return NextResponse.json({ error: "Error obteniendo token de Spotify" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Error obteniendo token de Spotify" },
+      { status: 500 }
+    );
   }
 }

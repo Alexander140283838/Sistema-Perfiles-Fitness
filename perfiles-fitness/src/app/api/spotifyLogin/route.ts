@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID!;
-const REDIRECT_URI = process.env.REDIRECT_URI!; // más limpio y seguro
-
+const REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI!;
 const SCOPES = [
   "user-read-private",
   "user-read-email",
@@ -20,5 +19,7 @@ export async function GET(req: NextRequest) {
     scope: SCOPES,
   });
 
-  return NextResponse.redirect(`https://accounts.spotify.com/authorize?${params.toString()}`);
+  return NextResponse.redirect(
+    `https://accounts.spotify.com/authorize?${params.toString()}`
+  );
 }
