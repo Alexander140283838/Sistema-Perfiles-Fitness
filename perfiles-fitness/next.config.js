@@ -1,13 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-
   experimental: {
-    appDir: true, // ✅ Le indica a Next/Vercel que use src/app
+    appDir: true, // 👈 le dice a Vercel que use la carpeta src/app
   },
-
   eslint: {
-    ignoreDuringBuilds: true, // ✅ Mantiene tu configuración original
+    ignoreDuringBuilds: true, // 👈 mantiene tu configuración actual
   },
 };
 
