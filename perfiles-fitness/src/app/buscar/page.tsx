@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 
 type Track = {
@@ -14,6 +15,12 @@ type Track = {
 };
 
 export default function BuscarPage() {
+  // ================================
+  // LEER ID DE LA LISTA DESDE LA URL
+  // ================================
+  const searchParams = useSearchParams();
+  const listaId = searchParams.get("id"); // ← CORREGIDO (antes decía "lista")
+
   const [genre, setGenre] = useState("rock");
   const [minBpm, setMinBpm] = useState(80);
   const [maxBpm, setMaxBpm] = useState(120);
@@ -24,6 +31,9 @@ export default function BuscarPage() {
   const [error, setError] = useState("");
   const [searched, setSearched] = useState(false);
 
+  // =====================================
+  // BUSCAR CANCIONES EN API INTERNA
+  // =====================================
   const handleSearch = async () => {
     try {
       setLoading(true);
@@ -46,6 +56,28 @@ export default function BuscarPage() {
     }
   };
 
+  // =============================================
+  // AGREGAR CANCIÓN A LA LISTA
+  // =============================================
+  const agregarCancion = async (track: Track) => {
+    if (!listaId) {
+      alert("No hay lista seleccionada.");
+      return;
+    }
+
+    const res = await fetch(`/api/listas/${listaId}/agregar-cancion`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ track }),
+    });
+
+    if (res.ok) {
+      alert(`🎶 Canción agregada a la lista correctamente`);
+    } else {
+      alert("Error al agregar canción.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
       <h1 className="text-3xl font-bold text-green-400 mb-6 flex items-center gap-2">
@@ -59,8 +91,8 @@ export default function BuscarPage() {
           <input
             value={genre}
             onChange={(e) => setGenre(e.target.value)}
-            placeholder="Ej: salsa, rock, dance"
-            className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-green-400"
+            className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-green-400"
+            placeholder="rock, salsa, dance..."
           />
         </div>
 
@@ -105,7 +137,7 @@ export default function BuscarPage() {
         </div>
       </div>
 
-      {/* Botón de búsqueda */}
+      {/* Botón buscar */}
       <button
         onClick={handleSearch}
         disabled={loading}
@@ -114,29 +146,12 @@ export default function BuscarPage() {
         {loading ? "Buscando..." : "Buscar canciones"}
       </button>
 
-      {/* Mensajes de estado */}
-      {error && <p className="text-red-400 mt-4">{error}</p>}
-
-      {!loading && searched && tracks.length === 0 && !error && (
-        <p className="text-gray-400 mt-10 text-center">
-          No se encontraron canciones con esos filtros. 🎶
+      {/* SI NO HAY LISTA SELECCIONADA */}
+      {!listaId && (
+        <p className="mt-6 text-yellow-400 font-semibold">
+          ⚠ No se ha seleccionado ninguna lista.  
+          Regresa a una lista y presiona **"Agregar canciones"**.
         </p>
-      )}
-
-      {!searched && !loading && (
-        <p className="text-gray-500 mt-10 text-center">
-          Ingresa los filtros y presiona{" "}
-          <span className="text-green-400 font-semibold">
-            Buscar canciones
-          </span>.
-        </p>
-      )}
-
-      {/* Loader animado */}
-      {loading && (
-        <div className="flex justify-center mt-10">
-          <div className="w-10 h-10 border-4 border-green-400 border-t-transparent rounded-full animate-spin"></div>
-        </div>
       )}
 
       {/* Resultados */}
@@ -154,13 +169,28 @@ export default function BuscarPage() {
               alt={t.name}
               className="w-full h-48 object-cover rounded mb-3 shadow-md"
             />
+
             <h3 className="font-bold text-lg">{t.name}</h3>
             <p className="text-sm text-gray-400">{t.artists}</p>
             <p className="text-xs text-gray-500 italic mb-2">{t.album}</p>
-            <p className="text-xs text-green-400">
-              💽 <b>{t.bpm.toFixed(0)}</b> BPM &nbsp;•&nbsp; ⏱️{" "}
-              {(t.duration_ms / 60000).toFixed(2)} min
+
+            <p className="text-xs text-green-400 mb-3">
+              💽 <b>{t.bpm}</b> BPM • ⏱ {(t.duration_ms / 60000).toFixed(2)} min
             </p>
+
+            {/* BOTÓN AGREGAR */}
+            {listaId ? (
+              <button
+                onClick={() => agregarCancion(t)}
+                className="bg-green-500 text-black px-3 py-1 rounded hover:bg-green-600 transition"
+              >
+                + Agregar a esta lista
+              </button>
+            ) : (
+              <p className="text-yellow-400 text-sm">
+                Selecciona una lista antes de agregar canciones.
+              </p>
+            )}
           </motion.div>
         ))}
       </div>
